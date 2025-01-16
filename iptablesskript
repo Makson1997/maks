@@ -1,0 +1,20 @@
+sudo iptables -A FORWARD -i eth0 -o eth1 -m comment --comment "ACCEPT eth0>eth1" -j ACCEPT
+sudo iptables -A FORWARD -j DOCKER-USER
+sudo iptables -A FORWARD -j DOCKER-ISOLATION-STAGE-1
+sudo iptables -A FORWARD -o docker0 -j DOCKER
+sudo iptables -A FORWARD -i docker0 ! -o docker0 -j ACCEPT
+sudo iptables -A FORWARD -i docker0 -o docker0 -j ACCEPT
+sudo iptables -A FORWARD -i eth0 -m conntrack ! --ctstate DNAT -j DROP
+sudo iptables -A FORWARD -i lo -j ACCEPT
+sudo iptables -A FORWARD -j FORWARD_direct
+sudo iptables -A FORWARD -j FORWARD_IN_ZONES
+sudo iptables -A FORWARD -j FORWARD_OUT_ZONES
+sudo iptables -A FORWARD -m conntrack --ctstate INVALID -j DROP
+sudo iptables -A FORWARD -j REJECT --reject-with icmp-host-prohibited
+sudo iptables -A FORWARD_IN_ZONES -i docker0 -g FWDI_docker
+sudo iptables -A FORWARD_IN_ZONES -i eth0 -g FWDI_public
+sudo iptables -A FORWARD_IN_ZONES -g FWDI_public
+sudo iptables -A FORWARD_OUT_ZONES -o docker0 -g FWDO_docker
+sudo iptables -A FORWARD_OUT_ZONES -o eth0 -g FWDO_public
+sudo iptables -A FORWARD_OUT_ZONES -g FWDO_public
+sudo iptables -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -m comment --comment "ACCEPT ESTABLISHED AND RELATED FORWARD" -j ACCEP

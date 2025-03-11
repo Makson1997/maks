@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Функция для сброса кеша файловой системы
+flush_cache() {
+  sync
+  echo 3 > /proc/sys/vm/drop_caches
+}
+
+# Функция для создания LVM-снимка
+create_snapshot() {
+  lvcreate --size 1G --snapshot --name backup_snapshot /dev/vgname/lvname
+}
+
+# Функция для архивирования снимка
+create_archive() {
+  tar -czf /backup/snapshot_backup.tar.gz /mnt/snapshot
+}
+
+# Функция для загрузки архива на S3
+upload_to_s3() {
+  aws s3 cp /backup/snapshot_backup.tar.gz s3://mybucket/
+}
+
+# Основная логика
+flush_cache
+create_snapshot
+create_archive
+upload_to_s3
+

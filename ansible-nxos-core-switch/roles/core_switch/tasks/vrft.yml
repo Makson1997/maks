@@ -1,0 +1,31 @@
+
+- name: Configure management VRF
+  cisco.nxos.nxos_vrf:
+    name: "{{ mgmt_vrf }}"
+    state: present
+
+- name: Enable mgmt0 interface
+  cisco.nxos.nxos_interfaces:
+    config:
+      - name: mgmt0
+        enabled: true
+    state: merged
+
+- name: Configure IP address and enable mgmt0 via CLI
+  cisco.nxos.nxos_command:
+    commands:
+      - "interface mgmt0"
+      - "ip address {{ mgmt_ip }}"
+      - "no shutdown"
+
+- name: Add default route for management VRF
+  cisco.nxos.nxos_static_routes:
+    config:
+      - vrf: "{{ mgmt_vrf }}"
+        address_families:
+          - afi: ipv4
+            routes:
+              - dest: "0.0.0.0/0"
+                next_hops:
+                  - forward_router_address: "{{ default_gateway }}"
+    state: merged

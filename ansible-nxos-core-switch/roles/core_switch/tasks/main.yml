@@ -1,0 +1,10 @@
+- name: Set hostname and domain
+  nxos_system:
+    hostname: "{{ hostname }}"
+    domain_name: "{{ domain_name }}"
+
+#- include_tasks: vrf.yml
+- include_tasks: vlan.yml
+- include_tasks: interfaces.yml
+- include_tasks: vpc.yml
+#- include_tasks: control_plane.yml

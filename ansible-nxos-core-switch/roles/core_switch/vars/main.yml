@@ -1,0 +1,61 @@
+
+# VRRP
+vrrp_auth_key: "Yar1004"
+
+
+# Port-Channels
+port_channels:
+  - { id: 10, vlans: "2-8,20-21,30-31,40,50,60-61,130,202,204,404,406-407,444", vpc: 10, mode: trunk }
+  - { id: 100, vlans: "2-8,20-21,30-31,40,50,60-61,130,202,204,404,406-407,444", vpc: 100, mode: trunk }
+  - { id: 1111, description: "VPC PEER LINK", mode: trunk }
+
+# CoPP Settings
+copp_profiles:
+  - { name: "copp-s-ping", rate: 100 }
+  - { name: "copp-s-ssh", rate: 500 }
+
+interfaces:
+  - name: Ethernet1/1
+    trunk_vlans: "2-8,20-21,30-31,40,50,60-61,130,202,204,404,406-407,444"
+    speed: 1000
+    channel_group: 10
+    mode: active
+  - name: Ethernet1/2
+    trunk_vlans: "2-8,20-21,30-31,40,50,60-61,130,202,204,404,406-407,444"
+    speed: 1000
+    channel_group: 100
+    mode: active
+  - name: Ethernet1/50/2
+    description: "*** VPC PEER LINKS ***"
+    trunk: true
+    channel_group: 1111
+    mode: active
+  - name: Ethernet1/50/3
+    description: "*** VPC PEER LINKS ***"
+    trunk: true
+    channel_group: 1111
+    mode: active
+  - name: Ethernet1/50/4
+    description: "*** VPC PEER LINKS ***"
+    trunk: true
+    channel_group: 1111
+    mode: active
+  - name: Ethernet1/51/2
+    description: "*** VPC PEER LINKS ***"
+    trunk: true
+    channel_group: 1111
+    mode: active
+  - name: Ethernet1/51/3
+    description: "*** VPC PEER LINKS ***"
+    trunk: true
+    channel_group: 1111
+    mode: active
+  - name: Ethernet1/51/4
+    description: "*** VPC PEER LINKS ***"
+    trunk: true
+    channel_group: 1111
+    mode: active
+  - name: Ethernet1/50/1
+    access_vlan: 1111
+  - name: Ethernet1/51/1
+    access_vlan: 1111

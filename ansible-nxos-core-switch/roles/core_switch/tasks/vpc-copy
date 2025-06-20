@@ -1,0 +1,46 @@
+- name: Configure VPC domain base
+  cisco.nxos.nxos_config:
+    parents: vpc domain 1
+
+- name: Configure VPC domain settings
+  cisco.nxos.nxos_config:
+    lines:
+      - role priority 100
+      - system-priority 2000
+      - peer-keepalive destination 10.224.102.2 source 10.224.102.1 vrf keepalive
+      - peer-gateway
+      - auto-recovery
+    parents: vpc domain 1
+  tags: vpc
+
+- name: Build Port-Channel config lines
+  set_fact:
+    pc_configs: >-
+      {{
+        (pc_configs | default([])) + [
+          {
+            'name': 'port-channel' + item.id|string,
+            'lines': (
+              [
+                ('description ' + item.description) if item.description is defined else None,
+                'switchport mode ' + item.mode,
+                ('switchport trunk allowed vlan ' + item.vlans) if item.vlans is defined else None,
+                ('vpc ' + item.vpc|string) if item.vpc is defined else None,
+                'speed 1000' if item.id != 1111 else 'speed 10000',
+                'spanning-tree port type network' if item.id == 1111 else None,
+                'vpc peer-link' if item.id == 1111 else None,
+                'no shutdown'
+              ] | select('string') | list
+            )
+          }
+        ]
+      }}
+  loop: "{{ port_channels }}"
+  loop_control:
+    loop_var: item
+
+- name: Apply Port-Channel configuration
+  cisco.nxos.nxos_config:
+    lines: "{{ item.lines }}"
+    parents: "interface {{ item.name }}"
+  loop: "{{ pc_configs }}"

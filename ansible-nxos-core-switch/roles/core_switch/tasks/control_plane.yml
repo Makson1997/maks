@@ -1,0 +1,8 @@
+- name: Configure CoPP
+  nxos_config:
+    lines:
+      - "class-map type control-plane match-any copp-s-ping"
+      - " police pps 100"
+      - "class-map type control-plane match-any copp-s-ssh"
+      - " police pps 500"
+    parents: "policy-map type control-plane copp-system-policy"

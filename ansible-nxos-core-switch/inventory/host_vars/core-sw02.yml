@@ -1,0 +1,20 @@
+hostname: "core-sw02"
+domain_name: "core-cisco-sw02"
+vpc_domain_id: 1
+role_priority: 200
+system_priority: 2000
+vpc_peer_ip_src: 10.224.102.2
+vpc_peer_ip_dst: 10.224.102.1
+
+
+vlans:
+  - { id: 6, ip: "192.168.66.247/24", vrrp_id: 6, vrrp: "192.168.66.248", vrrp_auth: "Yar1004" }
+  - { id: 30, ip: "10.7.10.247/24", vrrp_id: 30, vrrp: "10.7.10.248" }
+  - { id: 50, ip: "10.7.50.247/24", vrrp_id: 50, vrrp: "10.7.50.248" }
+  - { id: 60, ip: "10.7.60.14/28", vrrp_id: 60, vrrp: "10.7.60.12" }
+  - { id: 61, ip: "10.7.61.14/28", vrrp_id: 61, vrrp: "10.7.61.12", vrrp_auth: "Yar1004" }
+  - { id: 202, ip: "192.168.100.247/24", vrrp_id: 202, vrrp: "192.168.100.248" }
+  - { id: 407, ip: "10.7.5.247/24" }
+  - { id: 444, ip: "10.7.2.247/24", vrrp_id: 44, vrrp: "10.7.2.248", vrrp_auth: "Yar1004" }
+  - { id: 1111, ip: "10.224.102.2/24", vrf: "keepalive", no_autostate: true }
+

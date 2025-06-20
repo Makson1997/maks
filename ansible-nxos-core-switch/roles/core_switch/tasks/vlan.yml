@@ -1,0 +1,7 @@
+- name: Create VLANs
+  cisco.nxos.nxos_vlans:
+    config:
+      - vlan_id: "{{ item.id }}"
+        name: "{{ item.name | default('VLAN_' ~ item.id) }}"
+    state: merged
+  loop: "{{ vlans }}"

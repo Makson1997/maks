@@ -1,0 +1,41 @@
+- name: Ensure VLANs exist
+  cisco.nxos.nxos_vlans:
+    config:
+      - vlan_id: "{{ item.id }}"
+    state: merged
+  loop: "{{ vlans }}"
+
+- name: Configure SVIs and VRRP correctly
+  cisco.nxos.nxos_config:
+    lines:
+      - "{% if item.no_autostate | default(false) %}no autostate{% endif %}"
+      - "ip address {{ item.ip }}"
+      - "{% if item.vrf is defined %}vrf member {{ item.vrf }}{% endif %}"
+      - "{% if item.vrrp_id is defined %}vrrp {{ item.vrrp_id }}{% endif %}"
+      - "{% if item.vrrp_id is defined and item.vrrp is defined %} address {{ item.vrrp }}{% endif %}"
+      - "{% if item.vrrp_auth is defined and item.vrrp_id is defined %} authentication text {{ item.vrrp_auth }}{% endif %}"
+      - "{% if item.vrrp_id is defined %} no shutdown{% endif %}"
+      - "no shutdown"
+    parents: "interface Vlan{{ item.id }}"
+  loop: "{{ vlans }}"
+
+- name: Configure interfaces
+  vars:
+    interface_lines: >
+      {{
+        [
+          ('description ' ~ item.description) if item.description is defined else None,
+          ('speed ' ~ item.speed|string) if item.speed is defined else None,
+          'switchport mode trunk' if item.trunk | default(false) else None,
+          ('switchport trunk allowed vlan ' ~ item.trunk_vlans) if item.trunk | default(false) and item.trunk_vlans is defined else None,
+          'switchport mode access' if item.access_vlan is defined else None,
+          ('switchport access vlan ' ~ item.access_vlan|string) if item.access_vlan is defined else None,
+          ('channel-group ' ~ item.channel_group|string ~ ' mode ' ~ item.mode | default('active')) if item.channel_group is defined else None,
+          'no shutdown'
+        ] | select('truthy') | list
+      }}
+  cisco.nxos.nxos_config:
+    parents: "interface {{ item.name }}"
+    lines: "{{ interface_lines }}"
+  loop: "{{ interfaces }}"
+

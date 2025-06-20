@@ -1,0 +1,8 @@
+- name: Configure Core Nexus Switch
+  hosts: core_switches
+  gather_facts: no
+  connection: network_cli
+  collections:
+    - cisco.nxos
+  roles:
+    - core_switch

@@ -1,0 +1,44 @@
+- name: Configure VPC domain base
+  cisco.nxos.nxos_config:
+    parents: "vpc domain {{ vpc_domain_id }}"
+    lines: []   # Явно пусто, чтобы создать контекст, если нужно
+
+- name: Configure VPC domain settings
+  cisco.nxos.nxos_config:
+    parents: "vpc domain {{ vpc_domain_id }}"
+    lines:
+      - "role priority {{ role_priority }}"
+      - "system-priority {{ system_priority }}"
+      - "peer-keepalive destination {{ vpc_peer_ip_dst }} source {{ vpc_peer_ip_src }} vrf keepalive"
+      - peer-gateway
+      - auto-recovery
+      - delay restore 360        # Добавил из твоих пожеланий
+      - ip arp synchronize      # Добавил из твоих пожеланий
+
+- name: Build Port-Channel config lines
+  set_fact:
+    pc_configs: >-
+      {{
+        (pc_configs | default([])) + [
+          {
+            'name': 'port-channel' + (item.id | string),
+            'lines': [
+              (('description ' + item.description) if (item.description is defined) else None),
+              'switchport mode ' + item.mode,
+              (('switchport trunk allowed vlan ' + item.vlans) if (item.vlans is defined) else None),
+              (('vpc ' + (item.vpc | string)) if (item.vpc is defined) else None),
+              'no shutdown'
+            ] | select('string') | list
+          }
+        ]
+      }}
+  loop: "{{ port_channels }}"
+  loop_control:
+    loop_var: item
+
+- name: Apply Port-Channel configuration
+  cisco.nxos.nxos_config:
+    parents: "interface {{ item.name }}"
+    lines: "{{ item.lines }}"
+  loop: "{{ pc_configs }}"
+

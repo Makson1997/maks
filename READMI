@@ -1,0 +1,23 @@
+Проект разворачивает отказоустойчивый кластер из трёх экземпляров WordPress, балансируемых через HAProxy с поддержкой HTTPS.
+
+projekt/ 
+├── certs/ # SSL-сертификаты для HAProxy (server.pem) 
+├── conf/ # Дополнительные конфиги (опционально) 
+├── docker-compose.yml # Главный файл запуска 
+├── haproxy.cfg # Конфиг HAProxy 
+├── nginx/ # Конфиги для трёх 
+Nginx-инстансов 
+│ 
+├── nginx1.conf 
+│ 
+├── nginx2.conf 
+│ 
+└── nginx3.conf 
+├── php/ # Dockerfile PHP-FPM для WordPress 
+├── wordpress1-html/ # Контент первого сайта WordPress 
+├── wordpress2-html/ # Контент второго сайта WordPress 
+└── wordpress3-html/ # Контент третьего сайта WordPress
+	
+Создать и запустить кластер docker-compose up --build -d
+ Проверка на локальной машине зайти по адресу https://localhost:443/server-ip.php
+Результат Server IP: будет изменяться

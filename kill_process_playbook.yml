@@ -1,0 +1,12 @@
+- name: Kill a specific process
+  hosts: all
+  become: true
+  vars:
+    pid_to_kill: 436
+
+  tasks:
+    - name: Kill process by PID
+      kill_process:
+        pid: "{{ pid_to_kill }}"
+        debug: false
+

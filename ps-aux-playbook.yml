@@ -1,0 +1,12 @@
+- name: List all running processes
+  hosts: targets
+  become: true
+  tasks:
+    - name: Run ps aux
+      ansible.builtin.shell: ps aux
+      register: ps_output
+
+    - name: Show process list
+      ansible.builtin.debug:
+        var: ps_output.stdout_lines
+

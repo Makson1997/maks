@@ -1,0 +1,257 @@
+#Сразу уточняю, всё задание в одном файле, но в идеале разнести отдельно каждый параметр, namespace, service, ingress, deployment и т.д.
+# для лучшей читабильности и меньшего перегруза
+---
+# Namespace:  изоляция приложения в кластере
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: web-app
+  labels:
+    app.kubernetes.io/name: web-app  # Стандартная метка для идентификации приложения
+
+---
+# Service: внутренний сервис, доступ к подам через ClusterIP
+# Мы используем ClusterIP, потому что внешний доступ будет через Ingress
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-app
+  namespace: web-app
+spec:
+  type: ClusterIP  # Только внутренний IP в кластере в паре с  ingress даёт большую безопасность и удобсто в работе в проде, чем loadbalancer и nodeport
+  selector:
+    app: web-app  # Селектор подов, к которым направлять трафик. Связывает ресурсы между собой
+  ports:
+    - name: http
+      port: 80      # взяты стандартные порты, для безопасности можно изменить
+      targetPort: 8080
+      protocol: TCP
+
+---
+# Ingress: обеспечивает внешний доступ к приложению
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web-app-ingress
+  namespace: web-app
+  annotations:
+    kubernetes.io/ingress.class: nginx  # Контроллер Ingress (nginx) взят для примера, ingress может быть несколько и разных например haproxy и другие.
+    cert-manager.io/cluster-issuer: "letsencrypt-prod" # Автоматический выпуск TLS сертификатов через cert-manager который будет использоваться в данном кластере. Глобальный заранее настроенный сертификационный центр.
+spec:
+  rules:
+    - host: your-app.example.com  # Домен приложения на который будет реагировать этот Ingress
+      http:
+        paths:
+          - path: /            # Путь для маршрутизации
+            pathType: Prefix  # Тип сопоставления пути
+            backend:
+              service:
+                name: web-app  # Service, на который направлять трафик
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - your-app.example.com  # Домен для HTTPS
+      secretName: web-app-tls  # Secret с TLS сертификатом, создаётся cert-manager
+
+---
+# Deployment: управляет подами приложения
+apiVersion: apps/v1  # Версия API, через которую Kubernetes понимает, как интерпретировать ресурс
+kind: Deployment
+metadata:
+  name: web-app
+  namespace: web-app
+  labels:
+    app: web-app
+spec:
+  replicas: 2  # Минимум 2 для отказоустойчивости. Если будет 1, то будет простой при его отказе
+  revisionHistoryLimit: 10  # Храним до 10 прошлых ReplicaSet. Если новое обновление сломало приложение, можно быстро сделать rollback на старый ReplicaSet.
+  selector:
+    matchLabels:
+      app: web-app
+  strategy:
+    type: RollingUpdate  # Плавное обновление без простоя тоесть без остановки всех подов
+    rollingUpdate:
+      maxUnavailable: 1 # Одновременно может быть не более 1 пода недоступен во время обновления
+      maxSurge: 1 # Можно создать 1 дополнительный под сверх желаемого количества (чтобы новый под стартовал, прежде чем удалить старый)
+  template:
+    metadata:
+      labels:
+        app: web-app
+        version: "v1.0.0"  # Тег для точного контроля версий
+      annotations:
+        prometheus.io/scrape: "true"  # Разрешаем Prometheus собирать метрики для мониторинга за состоянием
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+     # Почему важно: при падении зоны кластер всё ещё будет иметь поды в других зонах, что повышает HA (High Availability)
+      terminationGracePeriodSeconds: 30  # Время (в секундах), которое Kubernetes даёт поду для «мягкого» завершения работы перед принудительным убийством (SIGKILL).
+      topologySpreadConstraints:
+        - maxSkew: 1            # Разница в количестве подов между зонами не более 1
+          topologyKey: topology.kubernetes.io/zone  # Распределение подов по зонам
+          whenUnsatisfiable: ScheduleAnyway  # Если идеального распределения не получится, всё равно планируем под на доступную ноду.
+          labelSelector:
+            matchLabels:
+              app: web-app
+      # То же самое, но распределение по конкретным нодам, чтобы поды не концентрировались на одной машине.
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname  # Распределение подов по нодам
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: web-app
+      containers:
+        - name: web-app
+          image: your-registry/web-app:v1.0.0  # Конкретный Docker-образ с immutable тегом (v1.0.0) — гарантирует, что при каждом деплое будет одинаковая версия.
+          imagePullPolicy: IfNotPresent  # Kubernetes тянет образ только если его нет локально на ноде, экономя трафик
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "8080"
+            - name: NODE_ENV
+              value: "production"
+          resources:
+            requests:
+              cpu: "100m"  # Минимальный гарантированный CPU
+              memory: "128Mi"
+            limits:
+              cpu: "500m"  # Лимит CPU для пиковых нагрузок
+              memory: "256Mi" # Максимум памяти для контейнера. Предотвращает «noisy neighbor» проблему — один контейнер не может забирать все ресурсы и мешать другим
+                              #В то-же время если Контейнеру достаточно мало памяти/CPU для нормальной работы, но при всплесках он может использовать больше до лимита
+          # Проверки старта и готовности
+          startupProbe:
+            httpGet:          # HTTP GET запрос к эндпоинту /healthz на порту 8080
+              path: /healthz
+              port: 8080
+            failureThreshold: 10 # Kubernetes делает до 10 проверок каждые 3 секунды. 
+              periodSeconds: 3   # Если все 10 проверок неудачные, контейнер считается не смог запуститься, и его перезапускают. 
+              successThreshold: 1 # Одна успешная проверка достаточна, чтобы считать контейнер запущенным.
+         # Важно: Пока startupProbe не прошла, livenessProbe не активна. Это защищает контейнер от преждевременного рестарта во время долгого старта.
+        # Далее проверка  readinessProbe, готов ли контейнер принимать трафик
+          readinessProbe:  
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 5 # Ждём 5 секунд после старта контейнера перед первой проверкой.
+            periodSeconds: 5       # Проверка каждые 5 секунд.
+            timeoutSeconds: 3      # Таймаут на ответ 3 секунды.
+            failureThreshold: 2    # Если два раза подряд не прошло, контейнер считается не готовым.
+            successThreshold: 1    # Достаточно одной успешной проверки, чтобы пометить как готовый.
+          # Проверка жив ли контейнер, работает ли приложение.
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 30 # даём контейнеру время на старт, чтобы не перезапустить раньше времени.
+              exec:
+            periodSeconds: 15  # Проверка каждые 15 секунд.
+            timeoutSeconds: 3  # Максимум 3 секунды на ответ.
+            failureThreshold: 3 # три неудачные проверки подряд = рестарт контейнера.
+            successThreshold: 1 # достаточно одной успешной проверки, чтобы признать контейнер живым.
+          # Безопасность контейнера. Ограничивает права контейнера для повышения безопасности.
+          securityContext:
+            allowPrivilegeEscalation: false # Запрещает повышать привилегии (например, через sudo или setuid).
+            readOnlyRootFilesystem: false   # Если true, root FS только для чтения (тут false, т.к. приложение пишет на диск).
+            runAsNonRoot: true              # Контейнер должен запускаться не от root.
+            runAsUser: 1000                 # Идентификаторы пользователя UID.
+            runAsGroup: 1000                # И группы GID для процесса контейнера
+            capabilities:                   # Удаляем все Linux capabilities, чтобы минимизировать риски безопасности. Capabilities — это набор специальных прав, которые можно дать процессу, даже если он не root
+              drop: ["ALL"]
+         # Позволяет контейнеру корректно завершить работу перед удалением или обновлением пода.
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 20"]  # Graceful shutdown ждёт 20 секунд.
+
+---
+# PodDisruptionBudget: защита от одновременного падения всех подов
+# Добровольные прерывания — это события, которые не являются аварийными, PDB НЕ защищает от аварийных сбоев
+# PDW нужен при обслуживание нод, обновление кластера, Rolling Updates деплойментов, HA-приложения.
+apiVersion: policy/v1
+kind: PodDisruptionBudget # Это объект Kubernetes, который задаёт ограничения на добровольные прерывания (disruptions) подов, чтобы кластер не нарушал доступность приложения
+metadata:
+  name: web-app-pdb
+  namespace: web-app
+spec:
+  minAvailable: 1 # Минимум 1 под всегда должен оставаться доступным при добровольных эвакуациях.
+  selector:
+    matchLabels:
+      app: web-app
+
+---
+# KEDA ScaledObject: автоматическое масштабирование Cron-триггеры и ночное время. Отказоустойчивость и HA
+# KEDA может масштабировать Deployment не только по CPU и памяти, но и по разным событиям: Сообщения в Kafka, RabbitMQ, SQS, NATS и т.д.Количество записей в базе данных, очередь задач или другие метрики
+# HPA стандартный работает только по метрикам Kubernetes (cpu, memory, custom metrics через Metrics API).
+apiVersion: keda.sh/v1alpha1 # Версия API KEDA для объектов масштабирования. Указывает Kubernetes, что этот объект будет обрабатываться контроллером KEDA.
+kind: ScaledObject           # Тип объекта KEDA, отвечающий за автоматическое масштабирование ресурсов (Deployment, StatefulSet, Job).
+metadata:
+  name: web-app-scaler # Уникальное имя объекта в namespace.
+  namespace: web-app
+spec:        # основная конфигурация
+  scaleTargetRef:
+    name: web-app
+    kind: Deployment
+  minReplicaCount: 2 # Никогда не будет меньше 2 реплик. Обеспечивает отказоустойчивость.
+  maxReplicaCount: 4 # Никогда не больше 4 реплик. Ограничивает ресурсы кластера.
+  triggers:          # Условия масштабирования
+    # Cron scale-up утром
+    - type: cron     # Масштабирование по времени, независимо от метрик.
+      metadata:
+        timezone: Europe/Moscow  # Учитывает локальное время.
+        start: "0 8 * * *"  # 8:00 утра когда начать масштабирование (cron-формат: минутa, час, день месяца, месяц, день недели).
+        end: "0 12 * * *"   # До 12:00 когда закончить действие
+        desiredReplicas: "4" # Число реплик в период с start по end.
+    # Cron scale-down вечером, аналогично первому, но для снижения нагрузки вечером.
+    - type: cron
+      metadata:
+        timezone: Europe/Moscow
+        start: "0 20 * * *"  # 20:00
+        end: "0 23 * * *"    # до 23:00
+        desiredReplicas: "2" # После 20:00 до 23:00 возвращаемся к 2 репликам. До этого времени (20:00–23:00) система постепенно снижает количество реплик, чтобы не перегружать кластер и экономить ресурсы.
+    # CPU-based autoscaling
+    - type: cpu # CPU-триггер (масштабирование по метрикам)
+      metadata:
+        type: Utilization  # Указываем целевой процент загрузки CPU (в среднем).
+        value: "70"  # Целевое значение CPU % utilization. Если средняя загрузка CPU > 70%, KEDA увеличивает число реплик.
+#Таким образом, KEDA сочетает time-based (cron) и metric-based (CPU) масштабирование.
+
+---
+# ServiceMonitor для Prometheus (если используется Prometheus Operator)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: web-app-monitor
+  namespace: web-app
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: web-app
+  namespaceSelector:
+    matchNames:
+      - web-app
+  endpoints:
+    - port: http
+      interval: 30s
+      path: /metrics
+      scrapeTimeout: 10s
+
+---
+# ConfigMap: конфигурация приложения
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-app-config # Имя ConfigMap, которое будет использовать приложение для чтения конфигурации.
+  namespace: web-app
+data:
+# Содержит ключи и значения конфигурации в виде строк.
+  app.config: |
+    {
+      "environment": "production",
+      "logLevel": "info",
+      "timeout": "30s"
+    }
+

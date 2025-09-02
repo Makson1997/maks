@@ -1,0 +1,14 @@
+# mariadb-master-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mariadb-master-config
+  namespace: wp-stack
+data:
+  master.cnf: |
+    [mysqld]
+    server-id=1
+    log-bin=mysql-bin
+    binlog-do-db=wpdb
+    binlog-do-db=test_replica
+

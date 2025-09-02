@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mariadb-slave
+  namespace: wp-stack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mariadb
+      role: slave
+  template:
+    metadata:
+      labels:
+        app: mariadb
+        role: slave
+    spec:
+      containers:
+      - name: mariadb
+        image: mariadb:10.5
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: rootpass
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - name: mariadb-slave-storage
+          mountPath: /var/lib/mysql
+        - name: config-volume
+          mountPath: /etc/mysql/conf.d
+      volumes:
+      - name: mariadb-slave-storage
+        persistentVolumeClaim:
+          claimName: mariadb-slave-pvc
+      - name: config-volume
+        configMap:
+          name: mariadb-slave-config
+

@@ -1,0 +1,12 @@
+# mariadb-master-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mariadb-master
+  namespace: wp-stack
+spec:
+  ports:
+  - port: 3306
+  selector:
+    app: mariadb
+    role: master

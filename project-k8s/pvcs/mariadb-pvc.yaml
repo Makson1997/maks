@@ -1,0 +1,13 @@
+# mariadb-master-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mariadb-master-pvc
+  namespace: wp-stack
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+

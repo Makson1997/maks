@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-phpfpm
+  namespace: wp-stack
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-phpfpm
+  template:
+    metadata:
+      labels:
+        app: nginx-phpfpm
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:stable
+          ports:
+            - containerPort: 80
+            - containerPort: 443
+          volumeMounts:
+            - name: nginx-config-volume
+              mountPath: /etc/nginx/conf.d
+            - name: tls-cert
+              mountPath: /etc/nginx/certs
+              readOnly: true
+            - name: www-data
+              mountPath: /var/www/html
+            - name: nginx-index-php
+              mountPath: /var/www/html/index.php
+              subPath: index.php
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+        - name: php-fpm
+          image: php:8.2-fpm
+          env:
+            - name: DB_HOST
+              value: mariadb-master.wp-stack.svc.cluster.local
+            - name: DB_USER
+              value: wpuser
+            - name: DB_PASSWORD
+              value: wppassword
+            - name: DB_NAME
+              value: wpdb
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          volumeMounts:
+            - name: www-data
+              mountPath: /var/www/html
+            - name: nginx-index-php
+              mountPath: /var/www/html/index.php
+              subPath: index.php
+
+      volumes:
+        - name: nginx-config-volume
+          configMap:
+            name: nginx-config
+            items:
+              - key: default.conf
+                path: default.conf
+        - name: www-data
+          emptyDir: {}
+        - name: tls-cert
+          secret:
+            secretName: wp-tls-cert
+        - name: nginx-index-php
+          configMap:
+            name: nginx-index-php
+            items:
+              - key: index.php
+                path: index.php
+

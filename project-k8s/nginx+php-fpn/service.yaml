@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-phpfpm
+  namespace: wp-stack
+spec:
+  selector:
+    app: nginx-phpfpm
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 80
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 443
+  type: ClusterIP

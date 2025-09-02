@@ -1,0 +1,14 @@
+# mariadb-slave-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mariadb-slave-pvc
+  namespace: wp-stack
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+  storageClassName: standard
+

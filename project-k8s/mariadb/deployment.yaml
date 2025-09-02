@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mariadb-master
+  namespace: wp-stack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mariadb
+      role: master
+  template:
+    metadata:
+      labels:
+        app: mariadb
+        role: master
+    spec:
+      containers:
+      - name: mariadb
+        image: mariadb:10.5
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: rootpass
+        - name: MYSQL_DATABASE
+          value: wpdb
+        - name: MYSQL_USER
+          value: wpuser
+        - name: MYSQL_PASSWORD
+          value: wppassword
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - name: mariadb-master-storage
+          mountPath: /var/lib/mysql
+        - name: config-volume
+          mountPath: /etc/mysql/conf.d
+      volumes:
+      - name: mariadb-master-storage
+        persistentVolumeClaim:
+          claimName: mariadb-master-pvc
+      - name: config-volume
+        configMap:
+          name: mariadb-master-config
+

@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: wp-stack
+data:
+  default.conf: |
+    server {
+        listen 80;
+        server_name _;
+        return 301 https://$host$request_uri;
+    }
+
+    server {
+        listen 443 ssl;
+        server_name _;
+
+        ssl_certificate /etc/nginx/certs/tls.crt;
+        ssl_certificate_key /etc/nginx/certs/tls.key;
+
+        root /var/www/html;
+        index index.php index.html index.htm;
+
+        location / {
+            try_files $uri $uri/ /index.php?$args;
+        }
+
+        location ~ \.php$ {
+            include fastcgi_params;
+            fastcgi_pass 127.0.0.1:9000;
+            fastcgi_index index.php;
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        }
+
+        location ~* \.(jpg|jpeg|png|gif|ico|css|js)$ {
+            expires 30d;
+            access_log off;
+        }
+    }
+

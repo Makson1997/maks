@@ -1,0 +1,12 @@
+# mariadb-slave-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mariadb-slave-config
+  namespace: wp-stack
+data:
+  slave.cnf: |
+    [mysqld]
+    server-id=2
+    relay-log=relay-log
+

@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Функция для сканирования портов
+scan_ports() {
+  local ip=$1
+  for port in {20..1000}; do
+    nc -z -w1 "$ip" "$port" &>/dev/null
+    if [[ $? -eq 0 ]]; then
+      echo "$(date),$ip,$port,open" >> scan_results.csv
+    fi
+  done
+}
+
+# Функция логирования
+log_message() {
+  local message=$1
+  logger -p "info" "$message"
+}
+
+# Основная логика
+for ip in $(cat ip_list.txt); do
+  scan_ports "$ip"
+done
+

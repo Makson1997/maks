@@ -1,0 +1,15 @@
+- name: Find the latest backup file
+  find:
+    paths: "{{ backup_search_path }}"
+    patterns: "*.bak"
+    recurse: yes
+  register: backup_files
+
+- name: Set latest backup file path
+  set_fact:
+    latest_backup: "{{ (backup_files.files | sort(attribute='mtime', reverse=true))[0].path }}"
+
+- name: Restore MSSQL database
+  shell: >
+    /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P '{{ mssql_sa_password }}'
+    -Q "RESTORE DATABASE [{{ restore_db_name }}] FROM DISK='{{ latest_backup }}' WITH REPLACE"

@@ -1,0 +1,37 @@
+---
+- name: Create Bitcoin user
+  user:
+    name: bitcoin
+    system: yes
+    home: /var/lib/bitcoind
+
+- name: Download Bitcoin Core (tar.gz)
+  get_url:
+    url: "https://bitcoincore.org/bin/bitcoin-core-{{ bitcoin_version }}/bitcoin-{{ bitcoin_version }}-x86_64-linux-gnu.tar.gz"
+    dest: "/tmp/bitcoin-{{ bitcoin_version }}.tar.gz"
+
+- name: Extract Bitcoin Core
+  unarchive:
+    src: "/tmp/bitcoin-{{ bitcoin_version }}.tar.gz"
+    dest: "/usr/local/"
+    remote_src: yes
+    extra_opts: "--strip-components=1"
+
+- name: Install binaries
+  file:
+    src: "/usr/local/bin/{{ item }}"
+    dest: "/usr/bin/{{ item }}"
+    state: link
+    force: yes
+  loop:
+    - bitcoind
+    - bitcoin-cli
+    - bitcoin-tx
+
+- name: Ensure bitcoin data dir exists
+  file:
+    path: "{{ bitcoin_data_dir }}"
+    state: directory
+    owner: bitcoin
+    group: bitcoin
+    mode: 0755

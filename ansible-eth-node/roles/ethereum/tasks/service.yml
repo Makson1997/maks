@@ -1,0 +1,12 @@
+- name: Create systemd service for ethereum
+  template:
+    src: ethereum.service.j2
+    dest: /etc/systemd/system/ethereum.service
+    mode: 0644
+  notify: reload systemd
+
+- name: Enable and start ethereum
+  systemd:
+    name: ethereum
+    enabled: yes
+    state: started

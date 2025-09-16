@@ -1,0 +1,7 @@
+- name: Manage Bitcoin Wallets
+  hosts: bitcoin_nodes
+  become: true
+  tasks:
+    - name: Example wallet management task
+      debug:
+        msg: "Wallet management logic here"

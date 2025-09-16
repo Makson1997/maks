@@ -1,0 +1,13 @@
+
+ethereum_version: "1.16.1-12b4131f"
+ethereum_user: "ethereum"
+ethereum_data_dir: "/mnt/data/ethereum"
+ethereum_rpc_port: 8545
+ethereum_ws_port: 8546
+ethereum_p2p_port: 30303
+ethereum_network: "sepolia"
+checkpoint_sync_url: "https://checkpoint-sync.sepolia.ethpandaops.io"
+genesis_beacon_api_url: "https://checkpoint-sync.sepolia.ethpandaops.io"
+prysm_dir: "/opt/prysm"
+prysm_datadir: "/mnt/data/prysm"
+jwt_secret_path: "/etc/ethereum/jwt.hex"

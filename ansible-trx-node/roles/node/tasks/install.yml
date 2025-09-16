@@ -1,0 +1,32 @@
+---
+- name: Create tron user
+  user:
+    name: tron
+    system: yes
+    home: /home/tron
+
+- name: Install required packages
+  apt:
+    name:
+      - openjdk-11-jdk
+    state: present
+    update_cache: yes
+
+- name: Create Tron directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: tron
+    group: tron
+  loop:
+    - "{{ tron_data_dir }}"
+    - "{{ tron_data_dir }}/logs"
+    - "{{ tron_data_dir }}/data"
+
+- name: Download Tron release
+  get_url:
+    url: "https://github.com/tronprotocol/java-tron/releases/download/{{ tron_version }}/FullNode.jar"
+    dest: "{{ tron_data_dir }}/FullNode.jar"
+    owner: tron
+    group: tron
+    mode: '0644'

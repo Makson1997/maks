@@ -1,0 +1,9 @@
+bitcoin_rpc_user: "bitcoinrpc"
+bitcoin_rpc_password: "securepassword"
+bitcoin_data_dir: "/mnt/data/.bitcoin"
+bitcoin_version: "29.0"          # Актуальная версия
+
+bitcoin_wallets:
+  - "project_gek"  # Кошелек для проекта Gekkard/Gekwallet/Gekkoin
+  - "project_telestore"  # Кошелек для проекта Tele.store
+  - "project_itbuild"    # Кошелек для проекта Itbuild

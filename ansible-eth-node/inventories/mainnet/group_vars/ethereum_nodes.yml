@@ -1,0 +1,13 @@
+
+ethereum_version: "1.16.1-12b4131f"
+ethereum_user: "ethereum"
+ethereum_data_dir: "/mnt/data/ethereum"
+ethereum_rpc_port: 8545
+ethereum_ws_port: 8546
+ethereum_p2p_port: 30303
+ethereum_network: "mainnet"
+checkpoint_sync_url: "https://sync-mainnet.beaconcha.in"
+genesis_beacon_api_url: "https://sync-mainnet.beaconcha.in"
+prysm_dir: "/opt/prysm"
+prysm_datadir: "/mnt/data/prysm"
+jwt_secret_path: "/etc/ethereum/jwt.hex"

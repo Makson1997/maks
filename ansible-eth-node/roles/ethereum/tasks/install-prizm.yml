@@ -1,0 +1,86 @@
+---
+  - name: Install required packages
+    apt:
+      name:
+        - curl
+        - wget
+        - unzip
+        - openssl
+      state: present
+      update_cache: yes
+
+  - name: Create necessary directories for Prysm
+    file:
+      path: "{{ item }}"
+      state: directory
+      mode: 0755
+      owner: ethereum
+      group: ethereum
+    loop:
+      - "{{ prysm_dir }}"
+      - "{{ prysm_datadir }}"
+
+  - name: Download prysm.sh script
+    get_url:
+      url: "https://raw.githubusercontent.com/prysmaticlabs/prysm/master/prysm.sh"
+      dest: "{{ prysm_dir }}/prysm.sh"
+      owner: ethereum
+      group: ethereum
+      mode: 0755
+
+  - name: Check if jwt.hex exists
+    stat:
+      path: "{{ jwt_secret_path }}"
+    register: jwt_file
+
+  - name: Generate JWT secret if not exists
+    ansible.builtin.command: "./prysm.sh beacon-chain generate-auth-secret"
+    register: jwt_secret
+    when: not jwt_file.stat.exists
+    args:
+      chdir: "{{ prysm_dir }}"
+
+  - name: Save JWT secret to file if generated
+    ansible.builtin.copy:
+      src: "{{ prysm_dir }}/jwt.hex"
+      dest: "{{ jwt_secret_path }}"
+      remote_src: yes
+      mode: 0644
+      owner: ethereum
+      group: ethereum
+    when: not jwt_file.stat.exists
+
+  - name: Create Prysm Beacon systemd service
+    copy:
+      dest: /etc/systemd/system/prysm-beacon.service
+      content: |
+        [Unit]
+        Description=Prysm Beacon Chain (Consensus Layer)
+        After=network.target
+
+        [Service]
+        User={{ ethereum_user }}
+        Type=simple
+        ExecStart={{ prysm_dir }}/prysm.sh beacon-chain \
+          --execution-endpoint=http://localhost:8551 \
+          --checkpoint-sync-url={{ checkpoint_sync_url }} \
+          --genesis-beacon-api-url={{ genesis_beacon_api_url }} \
+          --jwt-secret={{ jwt_secret_path }} \
+          --datadir={{ prysm_datadir }} \
+          --{{ ethereum_network }} \
+          --accept-terms-of-use
+        Restart=always
+        RestartSec=5
+
+        [Install]
+        WantedBy=multi-user.target
+
+  - name: Reload systemd daemon
+    systemd:
+      daemon_reload: yes
+
+  - name: Enable and start Prysm Beacon service
+    systemd:
+      name: prysm-beacon
+      enabled: yes
+      state: started

@@ -1,0 +1,33 @@
+- name: Check if MSSQL is installed
+  command: /opt/mssql/bin/sqlservr -v
+  register: mssql_installed
+  ignore_errors: yes
+
+- name: Add Microsoft GPG key (trusted method)
+  shell: curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /usr/share/keyrings/microsoft-prod.gpg > /dev/null
+  when: mssql_installed.rc != 0
+
+- name: Add Microsoft GPG key (compatibility with older systems)
+  shell: curl https://packages.microsoft.com/keys/microsoft.asc | tee /etc/apt/trusted.gpg.d/microsoft.asc > /dev/null
+  when: mssql_installed.rc != 0
+
+- name: Add Microsoft SQL Server repo
+  shell: curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/mssql-server-2022.list | tee /etc/apt/sources.list.d/mssql-server-2022.list
+  when: mssql_installed.rc != 0
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  when: mssql_installed.rc != 0
+
+- name: Install MSSQL Server
+  apt:
+    name: mssql-server
+    state: present
+  when: mssql_installed.rc != 0
+
+- name: Run MSSQL setup
+  become: true
+  shell: |
+    MSSQL_PID=Developmet MSSQL_SA_PASSWORD="{{ mssql_sa_password }}" MSSQL_TCP_PORT=1433 /opt/mssql/bin/mssql-conf -n setup accept-eula
+  when: mssql_installed.rc != 0

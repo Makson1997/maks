@@ -1,0 +1,5 @@
+- name: Wait for node to start
+  wait_for:
+    port: 8090
+    delay: 10
+    timeout: 300

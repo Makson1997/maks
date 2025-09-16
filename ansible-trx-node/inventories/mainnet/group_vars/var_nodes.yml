@@ -1,0 +1,5 @@
+tron_version: "GreatVoyage-v4.7.3"
+tron_trust_node: "127.0.0.1:50051"
+tron_discovery_enable: true
+tron_data_dir: "/mnt/data/tron"
+tron_jvm_memory: "24g"

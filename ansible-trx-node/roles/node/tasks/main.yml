@@ -1,0 +1,12 @@
+---
+- name: Install node
+  include_tasks: install.yml
+
+- name: Configure node
+  include_tasks: config.yml
+
+- name: Setup and start service
+  include_tasks: service.yml
+
+- name: Wait for service to start
+  include_tasks: wait_for_rpc.yml

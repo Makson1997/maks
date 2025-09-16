@@ -1,0 +1,11 @@
+- name: Ensure MSSQL is installed
+  import_tasks: install.yml
+
+- name: Restore the latest backup
+  import_tasks: restore.yml
+
+- name: Run SQL script on the database
+  import_tasks: run_script.yml
+
+- name: Backup the database
+  import_tasks: backup.yml

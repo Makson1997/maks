@@ -1,0 +1,5 @@
+- name: Wait for RPC interface
+  wait_for:
+    port: 8545
+    delay: 10
+    timeout: 300

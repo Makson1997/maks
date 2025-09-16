@@ -1,0 +1,10 @@
+- name: Create backup directory if not exists
+  file:
+    path: "{{ final_backup_path }}"
+    state: directory
+    mode: '0755'
+
+- name: Backup the database
+  shell: >
+    /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P '{{ mssql_sa_password }}'
+    -Q "BACKUP DATABASE [{{ restore_db_name }}] TO DISK='{{ final_backup_path }}/{{ restore_db_name }}_{{ ansible_date_time.iso8601_basic }}.bak'"

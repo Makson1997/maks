@@ -1,0 +1,15 @@
+GETH_OPTS="--datadir {{ ethereum_data_dir }} \
+--{{ ethereum_network }} \
+--http \
+--http.addr 0.0.0.0 \
+--http.port {{ ethereum_rpc_port }} \
+--http.api eth,web3,net,admin,txpool,engine \
+--cache=16384 \
+--verbosity=4 \
+--ws \
+--authrpc.addr 0.0.0.0 \
+--authrpc.port 8551 \
+--authrpc.vhosts=* \
+--authrpc.jwtsecret {{ jwt_secret_path }} \
+--rpc.allow-unprotected-txs \
+--http.corsdomain=http://localhost:3000"

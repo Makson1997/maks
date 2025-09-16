@@ -1,0 +1,8 @@
+- name: Изменение конфига ноды
+  hosts: var_nodes
+  become: yes
+  tasks:
+    - name: Include installation tasks
+      include_role:
+        name: node
+        tasks_from: config.yml

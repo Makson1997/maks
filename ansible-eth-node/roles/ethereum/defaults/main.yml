@@ -1,0 +1,8 @@
+
+ethereum_version: "1.14.1"
+ethereum_user: "geth"
+ethereum_data_dir: "/var/lib/geth"
+ethereum_rpc_port: 8545
+ethereum_ws_port: 8546
+ethereum_p2p_port: 30303
+ethereum_network: "mainnet"

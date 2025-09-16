@@ -1,0 +1,5 @@
+mssql_sa_password: "YourStrong!Passw0rd"
+backup_search_path: "/path/to/backup/files"
+restore_db_name: "MyDatabase"
+sql_script_file: "your_script.sql"
+final_backup_path: "/path/to/store/final/backup"

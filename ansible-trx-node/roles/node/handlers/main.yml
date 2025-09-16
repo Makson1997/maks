@@ -1,0 +1,10 @@
+---
+- name: reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: restart service
+  systemd:
+    name: tron
+    state: restarted
+    enabled: yes

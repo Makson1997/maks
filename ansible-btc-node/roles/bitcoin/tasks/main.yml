@@ -1,0 +1,16 @@
+---
+
+- name: Download and install Bitcoin Core
+  include_tasks: install.yml
+
+- name: Configure Bitcoin Core
+  include_tasks: config.yml
+
+- name: Setup systemd service
+  include_tasks: service.yml
+
+- name: Wait for bitcoind to start
+  include_tasks: wait_for_rpc.yml
+
+- name: Create wallets
+  include_tasks: wallets.yml

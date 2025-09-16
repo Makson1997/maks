@@ -1,0 +1,16 @@
+---
+
+- name: Install Geth
+  include_tasks: install.yml
+
+- name: Configure Geth node
+  include_tasks: config.yml
+
+- name: Configure Geth node
+  include_tasks: install-prizm.yml
+
+- name: Setup and start Geth service
+  include_tasks: service.yml
+
+- name: Wait for geth to start
+  include_tasks: wait_for_rpc.yml

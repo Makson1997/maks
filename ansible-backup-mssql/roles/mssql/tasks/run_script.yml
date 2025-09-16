@@ -1,0 +1,9 @@
+- name: Copy SQL script
+  copy:
+    src: "{{ sql_script_file }}"
+    dest: "/tmp/{{ sql_script_file }}"
+
+- name: Run SQL script
+  shell: >
+    /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P '{{ mssql_sa_password }}'
+    -d {{ restore_db_name }} -i /tmp/{{ sql_script_file }}

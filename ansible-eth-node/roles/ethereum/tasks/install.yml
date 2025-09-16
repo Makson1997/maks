@@ -1,0 +1,45 @@
+---
+- name: Create ethereum user
+  user:
+    name: ethereum
+    system: yes
+    home: /var/lib/ethereum
+
+- name: Download ethereum Core (tar.gz)
+  get_url:
+    url: "https://gethstore.blob.core.windows.net/builds/geth-linux-amd64-{{ ethereum_version }}.tar.gz"
+    dest: "/tmp/ethereum-{{ ethereum_version }}.tar.gz"
+
+- name: Ensure target directory exists
+  file:
+    path: "/usr/local/geth-{{ ethereum_version }}/"
+    state: directory
+    owner: ethereum
+    group: ethereum
+    mode: 0755
+
+- name: Extract ethereum Core
+  unarchive:
+    src: "/tmp/ethereum-{{ ethereum_version }}.tar.gz"
+    dest: "/usr/local/geth-{{ ethereum_version }}/"
+    remote_src: yes
+    extra_opts: "--strip-components=1"
+    owner: ethereum
+    group: ethereum
+    mode: 0755
+
+- name: Install binaries
+  file:
+    src: "/usr/local/geth-{{ ethereum_version }}/geth"
+    dest: "/usr/bin/geth"
+    state: link
+    force: yes
+  notify: restart ethereum
+
+- name: Ensure ethereum data dir exists
+  file:
+    path: "{{ ethereum_data_dir }}"
+    state: directory
+    owner: ethereum
+    group: ethereum
+    mode: 0755

@@ -1,0 +1,14 @@
+[Unit]
+Description=Geth Ethereum Node
+After=network.target
+
+[Service]
+User={{ ethereum_user }}
+EnvironmentFile=/etc/ethereum/ethereum.conf
+ExecStart=/usr/bin/geth $GETH_OPTS
+Restart=always
+RestartSec=5
+LimitNOFILE=4096
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,26 @@
+- name: Create ethereum config directory
+  file:
+    path: /etc/ethereum
+    state: directory
+    owner: ethereum
+    group: ethereum
+    mode: 0750
+
+- name: Deploy config.toml
+  template:
+    src: ethereum.toml.j2
+    dest: /etc/ethereum/config.toml
+    mode: 0640
+    owner: ethereum
+    group: ethereum
+
+- name: Deploy ethereum.conf
+  template:
+    src: ethereum.conf.j2
+    dest: /etc/ethereum/ethereum.conf
+    mode: 0640
+    owner: ethereum
+    group: ethereum
+  notify: restart ethereum
+
+

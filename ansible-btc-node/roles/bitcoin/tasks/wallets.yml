@@ -1,0 +1,7 @@
+---
+- name: Create wallets
+  command: "bitcoin-cli -rpcconnect=127.0.0.1 -rpcuser={{ bitcoin_rpc_user }} -rpcpassword={{ bitcoin_rpc_password }} createwallet {{ item }}"
+  loop: "{{ bitcoin_wallets }}"
+  register: wallet_creation
+  changed_when: "'already exists' not in wallet_creation.stdout"
+  ignore_errors: yes  # Если кошелек уже существует

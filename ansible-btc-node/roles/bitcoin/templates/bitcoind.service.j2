@@ -1,0 +1,14 @@
+[Unit]
+Description=Bitcoin daemon
+After=network.target
+
+[Service]
+User=bitcoin
+Group=bitcoin
+Type=simple
+ExecStart=/usr/bin/bitcoind -conf=/etc/bitcoin/bitcoin.conf -datadir={{ bitcoin_data_dir }}
+Restart=on-failure
+TimeoutSec=300
+
+[Install]
+WantedBy=multi-user.target

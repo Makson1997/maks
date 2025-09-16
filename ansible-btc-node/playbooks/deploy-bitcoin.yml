@@ -1,0 +1,8 @@
+- name: Deploy and sync Bitcoin node
+  hosts: bitcoin_nodes
+  become: yes
+  tasks:
+    - name: Include installation tasks
+      include_role:
+        name: bitcoin
+        tasks_from: main.yml

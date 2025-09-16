@@ -1,0 +1,12 @@
+- name: Create systemd service for bitcoind
+  template:
+    src: bitcoind.service.j2
+    dest: /etc/systemd/system/bitcoind.service
+    mode: 0644
+  notify: reload systemd
+
+- name: Enable and start bitcoind
+  systemd:
+    name: bitcoind
+    enabled: yes
+    state: started

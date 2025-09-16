@@ -1,0 +1,33 @@
+# Docker
+# Build a Docker image
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+- main
+
+resources:
+- repo: self
+variables:
+  bitcoin_rpc_user: $(rpcUser)
+  bitcoin_rpc_password: $(rpcPassword)
+  bitcoin_wallets: "['project_gek','project_telestore','project_itbuild']"
+stages:
+- stage: Deploy
+  displayName: Uptime
+  jobs:
+  - deployment: Runimages
+    environment:
+      name: azure-anisible
+      resourceType: VirtualMachine
+    strategy:
+      # Default deployment strategy, more coming...
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
+          - script: |
+              cd $(System.DefaultWorkingDirectory)/ansible-btc-node
+              ansible-playbook ./playbooks/deploy-bitcoin.yml \
+                --extra-vars "bitcoin_rpc_user=$(bitcoin_rpc_user) bitcoin_rpc_password=$(bitcoin_rpc_password) bitcoin_wallets=$(bitcoin_wallets)"
+            displayName: 'Выполняется установка node btc'
+            

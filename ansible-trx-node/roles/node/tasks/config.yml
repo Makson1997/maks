@@ -1,0 +1,9 @@
+- name: Configure Tron node
+  template:
+    src: conf.j2
+    dest: "{{ tron_data_dir }}/config.conf"
+    owner: tron
+    group: tron
+    mode: '0644'
+
+

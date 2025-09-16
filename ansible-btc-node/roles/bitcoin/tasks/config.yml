@@ -1,0 +1,16 @@
+- name: Create bitcoin config directory
+  file:
+    path: /etc/bitcoin
+    state: directory
+    owner: bitcoin
+    group: bitcoin
+    mode: 0750
+
+- name: Deploy bitcoin.conf
+  template:
+    src: bitcoin.conf.j2
+    dest: /etc/bitcoin/bitcoin.conf
+    mode: 0640
+    owner: bitcoin
+    group: bitcoin
+  notify: restart bitcoind

@@ -1,0 +1,16 @@
+[Unit]
+Description=Tron Full Node
+After=network.target
+
+[Service]
+User=tron
+Group=tron
+Type=simple
+ExecStart=/usr/bin/java -Xmx{{ tron_jvm_memory }} -jar {{ tron_data_dir }}/FullNode.jar -c {{ tron_data_dir }}/config.conf
+WorkingDirectory={{ tron_data_dir }}
+Restart=always
+RestartSec=3
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

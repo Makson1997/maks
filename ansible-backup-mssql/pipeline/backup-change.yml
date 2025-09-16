@@ -1,0 +1,36 @@
+# Docker
+# Build a Docker image
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+- main
+
+resources:
+- repo: self
+variables:
+  mssql_sa_password: $(SA)
+  backup_search_path: $(PATH_WHERE_BACKUP)
+  restore_db_name: $(DB_NAME)
+  sql_script_file: $(SCRIPT_FOR_RUN)
+  final_backup_path: $(PATH_SAVE_BACKUP)
+stages:
+- stage: Deploy
+  displayName: Uptime
+  jobs:
+  - deployment: Runimages
+    environment:
+      name: azure-anisible
+      resourceType: VirtualMachine
+    strategy:
+      # Default deployment strategy, more coming...
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
+          - script: |
+              cd $(System.DefaultWorkingDirectory)/ansible-modified-backup-mssql
+              ansible-playbook -i inventory playbook.yml \
+                --extra-vars "mssql_sa_password=$(mssql_sa_password) backup_search_path=$(backup_search_path) restore_db_name=$(restore_db_name) \
+                sql_script_file=$(sql_script_file) final_backup_path=($final_backup_path)"
+            displayName: 'Подготавливается бекап базы данных для дальнейшего использования разработчиками'
+            

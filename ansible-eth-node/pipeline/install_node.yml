@@ -1,0 +1,28 @@
+# Docker
+# Build a Docker image
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+- main
+
+resources:
+- repo: self
+stages:
+- stage: Deploy
+  displayName: Uptime
+  jobs:
+  - deployment: Runimages
+    environment:
+      name: azure-anisible
+      resourceType: VirtualMachine
+    strategy:
+      # Default deployment strategy, more coming...
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
+          - script: |
+              cd $(System.DefaultWorkingDirectory)/ansible-eth-node
+              ANSIBLE_CONFIG=./$(NETWORK).cfg ansible-playbook ./playbooks/deploy-ethereum.yml
+            displayName: 'Выполняется установка node ethereum'
+            

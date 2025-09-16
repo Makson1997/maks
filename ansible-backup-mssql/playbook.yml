@@ -1,0 +1,5 @@
+- name: MSSQL management on Ubuntu
+  hosts: backup-server
+  become: yes
+  roles:
+    - mssql

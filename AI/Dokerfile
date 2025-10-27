@@ -1,0 +1,55 @@
+# Стадия 1: Предобработка данных
+FROM python:3.9-slim AS data-prep
+
+WORKDIR /app
+
+# Установка необходимых библиотек
+RUN pip install --no-cache-dir pandas scikit-learn joblib
+
+# Создаем структуру директорий
+RUN mkdir -p /data/raw /data/processed
+
+# Копируем исходные данные и скрипт предобработки
+COPY data/iris.csv /data/raw/
+COPY scripts/preprocess.py .
+
+# Запускаем предобработку
+RUN python preprocess.py
+
+# Стадия 2: Обучение модели
+FROM python:3.9 AS model-training
+
+WORKDIR /app
+
+# Установка библиотек машинного обучения
+RUN pip install --no-cache-dir scikit-learn joblib
+
+# Копируем подготовленные данные из первой стадии
+COPY --from=data-prep /data/processed /data/processed
+
+# Копируем скрипт обучения
+COPY scripts/train.py .
+
+# Обучаем модель
+RUN python train.py
+
+# Стадия 3: Развертывание модели в API сервисе
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Установка минимальных зависимостей для сервинга
+RUN pip install --no-cache-dir flask scikit-learn joblib gunicorn
+
+# Копируем модель и препроцессоры
+COPY --from=model-training /model /model
+COPY --from=data-prep /data/processed /data/processed
+
+# Копируем API скрипт
+COPY scripts/app.py .
+
+# Открываем порт
+EXPOSE 5000
+
+# Запускаем приложение через gunicorn для production
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
